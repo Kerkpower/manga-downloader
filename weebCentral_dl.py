@@ -76,10 +76,8 @@ def _get_manga_info(series_url):
 def _get_chapters(series_url):
     """Get dictionary of chapters from the series page."""
     try:
-        # Wait for page to load
         time.sleep(3)
 
-        # First, try to get the full chapter list endpoint
         series_id = _extract_series_id(series_url)
         full_chapter_list_url = f"https://weebcentral.com/series/{series_id}/full-chapter-list"
 
@@ -91,7 +89,6 @@ def _get_chapters(series_url):
 
         chapters = {}
 
-        # Find all chapter links (looking for both "Chapter" and "Episode" patterns)
         chapter_links = soup.find_all('a', href=re.compile(r'/chapters/'))
 
         for link in chapter_links:
@@ -99,14 +96,20 @@ def _get_chapters(series_url):
             if not chapter_url.startswith('http'):
                 chapter_url = 'https://weebcentral.com' + chapter_url
 
-            # Extract chapter/episode number from the span
-            # Look for both "Chapter" and "Episode" patterns
-            chapter_span = link.find('span', string=re.compile(r'(Chapter|Episode)\s+\d+'))
+            # Target the specific empty-class span that holds the chapter label
+            # e.g. "Chapter 1", "Volume 3", "Episode 12", "Page 5", etc.
+            chapter_span = link.find('span', class_='')
             if chapter_span:
                 chapter_text = chapter_span.text.strip()
-                # Remove both "Chapter" and "Episode" prefixes
-                chapter_num = chapter_text.replace('Chapter ', '').replace('Episode ', '')
-                chapters[chapter_num] = chapter_url
+                # Extract the trailing number (int or decimal) from whatever prefix is used
+                match = re.search(r'([\d.]+)$', chapter_text)
+                if match:
+                    chapter_num = match.group(1)
+                    chapters[chapter_num] = chapter_url
+                else:
+                    # No number found — use sanitised full text as fallback key
+                    print(f"Warning: No number found in '{chapter_text}', using full text as key")
+                    chapters[chapter_text] = chapter_url
 
         return chapters
     except (requests.RequestException, ValueError) as e:
