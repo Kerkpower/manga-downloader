@@ -1,11 +1,12 @@
 # Manga Downloader
 
-Downloads manga from MangaDex and DemonicScans with resume capability.
+Downloads manga from MangaDex, WeebCentral, and DemonicScans with resume capability.
 
 ## Supported Sources
 
 - MangaDex (mangadex.org)
 - DemonicScans (demonicscans.org)
+- WeebCentral (weebcentral.com)
 
 ## Requirements
 
@@ -17,6 +18,8 @@ Downloads manga from MangaDex and DemonicScans with resume capability.
 
 Install dependencies:
 ```
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -35,6 +38,7 @@ https://demonicscans.org/manga/Skeleton-Warrior
 
 2. Run:
 ```
+source .venv/bin/activate
 python main.py
 ```
 
