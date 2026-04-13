@@ -17,33 +17,12 @@ BASE_URL = "https://api.mangadex.org"
 LANGUAGES = ["en"]
 
 
-def _get_expected_page_count(chapter_id):
-    """Get the expected number of pages for a chapter."""
-    try:
-        chapter_r = requests.get(f"{BASE_URL}/at-home/server/{chapter_id}", timeout=30)
-        chapter_r.raise_for_status()
-        chapter_json = chapter_r.json()
-        return len(chapter_json["chapter"]["data"])
-    except (requests.RequestException, KeyError, ValueError) as e:
-        print(f"Error getting page count for chapter {chapter_id}: {e}")
-        return 0
 
 
 def _is_chapter_complete(manga_title, manga_id, chapter_identifier, chapter_id):
     """Check if a chapter is completely downloaded."""
     chapter_path = f"downloads/mangaDex/{manga_title} - {manga_id}/{chapter_identifier} - {chapter_id}"
-
-    if not os.path.exists(chapter_path):
-        return False
-
-    # Count existing files (excluding any directories)
-    existing_files = [f for f in os.listdir(chapter_path) if os.path.isfile(os.path.join(chapter_path, f))]
-    existing_count = len(existing_files)
-
-    # Get expected page count
-    expected_count = _get_expected_page_count(chapter_id)
-
-    return existing_count == expected_count
+    return os.path.exists(os.path.join(chapter_path, ".completed"))
 
 
 def _download_chapter(manga_title, manga_id, chapter_identifier, chapter_id):
@@ -78,6 +57,10 @@ def _download_chapter(manga_title, manga_id, chapter_identifier, chapter_id):
 
     print(f"Downloaded {chapter_identifier}: {downloaded}/{len(data)} pages.")
 
+    # Mark chapter as complete
+    with open(os.path.join(chapter_path, ".completed"), 'w') as f:
+        f.write("")
+
 
 def _download_series(manga_title, manga_id, chapters_data):
     """Download a series with numbered chapters."""
@@ -88,49 +71,25 @@ def _download_series(manga_title, manga_id, chapters_data):
         chapter_id = chapter_data["id"]
         chapters[chapter_num] = chapter_id
 
-    # Sort chapters, handling non-numeric chapter numbers
     try:
         chapters = dict(sorted(chapters.items(), key=lambda x: float(x[0])))
     except (ValueError, TypeError):
-        # Fallback: sort as strings if conversion fails
         chapters = dict(sorted(chapters.items(), key=lambda x: str(x[0])))
 
-    # Find where to resume
-    resume_from = None
     for chapter_num, chapter_id in chapters.items():
-        if not _is_chapter_complete(manga_title, manga_id, chapter_num, chapter_id):
-            resume_from = chapter_num
-            break
-
-    if resume_from is not None:
-        print(f"Resuming from chapter {resume_from}")
-    else:
-        print("All chapters already downloaded and complete!")
-        return
-
-    # Download from resume point onwards
-    should_download = False
-    for chapter_num, chapter_id in chapters.items():
-        if chapter_num == resume_from:
-            should_download = True
-
-        if should_download:
-            _download_chapter(manga_title, manga_id, chapter_num, chapter_id)
+        if _is_chapter_complete(manga_title, manga_id, chapter_num, chapter_id):
+            print(f"Skipping chapter {chapter_num} (already complete)")
+            continue
+        _download_chapter(manga_title, manga_id, chapter_num, chapter_id)
 
 
 def _download_oneshots(manga_title, manga_id, chapters_data):
     """Download oneshots or chapters without numbers."""
-    # Check if oneshot is complete
-    if chapters_data:
-        chapter_id = chapters_data[0]["id"]  # Assuming single oneshot
-        if _is_chapter_complete(manga_title, manga_id, "0", chapter_id):
-            print("Oneshot already downloaded and complete!")
-            return
-        else:
-            print("Resuming oneshot download from chapter 0")
-
     for chapter_data in chapters_data:
         chapter_id = chapter_data["id"]
+        if _is_chapter_complete(manga_title, manga_id, "0", chapter_id):
+            print("Skipping oneshot (already complete)")
+            continue
         _download_chapter(manga_title, manga_id, "0", chapter_id)
 
 
