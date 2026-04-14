@@ -48,7 +48,11 @@ def read_url_list(filename='list.txt'):
     """
     try:
         with open(filename, 'r', encoding='utf-8') as f:
-            urls = [line.strip() for line in f if line.strip()]
+            urls = [
+                line.split('#')[0].strip()
+                for line in f
+                if line.split('#')[0].strip()
+            ]
         return urls
     except FileNotFoundError:
         print(f"Error: File '{filename}' not found.")
