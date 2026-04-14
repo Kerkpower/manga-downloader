@@ -66,7 +66,6 @@ def _download_chapter(driver, manga_title, chapter_num, chapter_url):
     try:
         print(f"Loading chapter {chapter_num}...")
         full_url = f"https://demonicscans.org{chapter_url}" if not chapter_url.startswith('http') else chapter_url
-        print(f"Fetching images from: {full_url}")
         driver.get(full_url)
         time.sleep(3)
 
@@ -154,7 +153,6 @@ def download(manga_url):
         return
 
     try:
-        print(f"Fetching series page from: {manga_url}")
         driver.get(manga_url)
         time.sleep(5)
 

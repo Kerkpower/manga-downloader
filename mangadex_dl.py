@@ -30,9 +30,7 @@ def _download_chapter(manga_title, manga_id, chapter_identifier, chapter_id):
 
     try:
         print(f"Loading chapter {chapter_identifier}...")
-        images_url = f"{BASE_URL}/at-home/server/{chapter_id}"
-        print(f"Fetching images from: {images_url}")
-        chapter_r = requests.get(images_url, timeout=30)
+        chapter_r = requests.get(f"{BASE_URL}/at-home/server/{chapter_id}", timeout=30)
         chapter_r.raise_for_status()
         chapter_json = chapter_r.json()
 
@@ -118,9 +116,7 @@ def download(manga_url, languages=None):
 
     # Fetch manga info
     try:
-        manga_info_url = f"{BASE_URL}/manga/{manga_id}"
-        print(f"Fetching series page from: {manga_info_url}")
-        r_manga = requests.get(manga_info_url, timeout=30)
+        r_manga = requests.get(f"{BASE_URL}/manga/{manga_id}", timeout=30)
         r_manga.raise_for_status()
         r_manga_json = r_manga.json()
         manga_title = list(r_manga_json["data"]["attributes"]["title"].values())[0]
@@ -131,10 +127,9 @@ def download(manga_url, languages=None):
 
     # Fetch chapters
     try:
-        feed_url = f"{BASE_URL}/manga/{manga_id}/feed"
-        print(f"Fetching full chapter list from: {feed_url}")
+        print(f"Fetching chapter list...")
         r_feed = requests.get(
-            feed_url,
+            f"{BASE_URL}/manga/{manga_id}/feed",
             params={
                 "translatedLanguage[]": languages,
                 "limit": 500,
