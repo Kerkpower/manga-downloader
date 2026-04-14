@@ -64,7 +64,9 @@ def _download_chapter(driver, manga_title, chapter_num, chapter_url):
     chapter_path.mkdir(parents=True, exist_ok=True)
 
     try:
+        print(f"Loading chapter {chapter_num}...")
         full_url = f"https://demonicscans.org{chapter_url}" if not chapter_url.startswith('http') else chapter_url
+        print(f"Fetching images from: {full_url}")
         driver.get(full_url)
         time.sleep(3)
 
@@ -78,7 +80,7 @@ def _download_chapter(driver, manga_title, chapter_num, chapter_url):
         images = main_div.find_all('img', class_='imgholder')
 
         if not images:
-            print(f"Error: No images found for chapter {chapter_num}")
+            print(f"Warning: No images found for chapter {chapter_num}")
             return
     except Exception as e:
         print(f"Error fetching chapter data for {chapter_num}: {e}")
@@ -111,7 +113,7 @@ def _download_chapter(driver, manga_title, chapter_num, chapter_url):
             print(f"Error downloading page {page_num} for chapter {chapter_num}: {e}")
             continue
 
-    print(f"Downloaded chapter {chapter_num}: {downloaded}/{len(images)} pages.")
+    print(f"Downloaded Chapter {chapter_num}: {downloaded}/{len(images)} pages.")
 
     # Mark chapter as complete
     (chapter_path / ".completed").touch()
@@ -152,7 +154,7 @@ def download(manga_url):
         return
 
     try:
-        # Extract manga info
+        print(f"Fetching series page from: {manga_url}")
         driver.get(manga_url)
         time.sleep(5)
 

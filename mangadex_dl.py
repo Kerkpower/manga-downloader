@@ -17,8 +17,6 @@ BASE_URL = "https://api.mangadex.org"
 LANGUAGES = ["en"]
 
 
-
-
 def _is_chapter_complete(manga_title, manga_id, chapter_identifier, chapter_id):
     """Check if a chapter is completely downloaded."""
     chapter_path = f"downloads/mangaDex/{manga_title} - {manga_id}/{chapter_identifier} - {chapter_id}"
@@ -31,7 +29,10 @@ def _download_chapter(manga_title, manga_id, chapter_identifier, chapter_id):
     os.makedirs(chapter_path, exist_ok=True)
 
     try:
-        chapter_r = requests.get(f"{BASE_URL}/at-home/server/{chapter_id}", timeout=30)
+        print(f"Loading chapter {chapter_identifier}...")
+        images_url = f"{BASE_URL}/at-home/server/{chapter_id}"
+        print(f"Fetching images from: {images_url}")
+        chapter_r = requests.get(images_url, timeout=30)
         chapter_r.raise_for_status()
         chapter_json = chapter_r.json()
 
@@ -52,10 +53,10 @@ def _download_chapter(manga_title, manga_id, chapter_identifier, chapter_id):
             downloaded += 1
             time.sleep(0.2)
         except (requests.RequestException, IOError) as e:
-            print(f"Error downloading page {page} for {chapter_identifier}: {e}")
+            print(f"Error downloading page {page} for chapter {chapter_identifier}: {e}")
             continue
 
-    print(f"Downloaded {chapter_identifier}: {downloaded}/{len(data)} pages.")
+    print(f"Downloaded Chapter {chapter_identifier}: {downloaded}/{len(data)} pages.")
 
     # Mark chapter as complete
     with open(os.path.join(chapter_path, ".completed"), 'w') as f:
@@ -117,7 +118,9 @@ def download(manga_url, languages=None):
 
     # Fetch manga info
     try:
-        r_manga = requests.get(f"{BASE_URL}/manga/{manga_id}", timeout=30)
+        manga_info_url = f"{BASE_URL}/manga/{manga_id}"
+        print(f"Fetching series page from: {manga_info_url}")
+        r_manga = requests.get(manga_info_url, timeout=30)
         r_manga.raise_for_status()
         r_manga_json = r_manga.json()
         manga_title = list(r_manga_json["data"]["attributes"]["title"].values())[0]
@@ -128,8 +131,10 @@ def download(manga_url, languages=None):
 
     # Fetch chapters
     try:
+        feed_url = f"{BASE_URL}/manga/{manga_id}/feed"
+        print(f"Fetching full chapter list from: {feed_url}")
         r_feed = requests.get(
-            f"{BASE_URL}/manga/{manga_id}/feed",
+            feed_url,
             params={
                 "translatedLanguage[]": languages,
                 "limit": 500,
